@@ -10,7 +10,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": ""
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",
