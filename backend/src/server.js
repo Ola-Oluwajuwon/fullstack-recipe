@@ -3,10 +3,14 @@ import { and, eq } from "drizzle-orm";
 import { ENV } from "../config/env.js";
 import { db } from "../config/db.js";
 import { favoritesTable } from "./db/schema.js";
+import job from "../config/cron.js";
+job;
 
 // Initialize Express app
 const app = express();
 const PORT = ENV.PORT || 3000;
+
+if (ENV.NODE_ENV === "production") job.start();
 
 // Middleware to parse JSON requests
 app.use(express.json());
