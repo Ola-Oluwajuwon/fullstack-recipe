@@ -54,6 +54,28 @@ app.post("/api/favorites", async (req, res) => {
   }
 });
 
+app.get("/api/favorites/:userId", async (req, res) => {
+  // Logic to get favorite recipes for a user
+  try {
+    const { userId } = req.params;
+
+    const userFavorites = await db
+      .select()
+      .from(favoritesTable)
+      .where(eq(favoritesTable.userId, userId));
+
+    res.status(200).json({
+      success: true,
+      data: userFavorites,
+    });
+  } catch (error) {
+    console.error("Error fetching favorite recipes:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch favorite recipes" });
+  }
+});
+
 app.delete("/api/favorites/:userId/:recipeId", async (req, res) => {
   // Logic to remove a favorite recipe
   try {
