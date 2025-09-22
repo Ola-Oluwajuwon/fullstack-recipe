@@ -1,4 +1,5 @@
 import express from "express";
+import { and, eq } from "drizzle-orm";
 import { ENV } from "../config/env.js";
 import { db } from "../config/db.js";
 import { favoritesTable } from "./db/schema.js";
@@ -50,6 +51,28 @@ app.post("/api/favorites", async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Failed to add recipe to favorites" });
+  }
+});
+
+app.delete("/api/favorites/:userId/:recipeId", async (req, res) => {
+  // Logic to remove a favorite recipe
+  try {
+    const { userId, recipeId } = req.params;
+    await db
+      .delete(favoritesTable)
+      .where(
+        and(
+          eq(favoritesTable.userId, userId),
+          eq(favoritesTable.recipeId, parseInt(recipeId))
+        )
+      );
+
+    res.status(204).end(); //delete success, no body
+  } catch (error) {
+    console.error("Error removing favorite recipe:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to remove favorite recipe" });
   }
 });
 
