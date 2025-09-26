@@ -43,3 +43,8 @@ app-example
 # generated native folders
 /ios
 /android
+mobile/android
+mobile/.gitignore
+
+# generated apk
+expo-go.apk
