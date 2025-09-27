@@ -3,6 +3,7 @@ node_modules/
 
 # Environment variables
 backend/.env
+mobile/.env
 mobile/.vscode
 
 # Expo
