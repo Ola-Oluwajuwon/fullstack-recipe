@@ -1,17 +1,31 @@
+import React from "react";
 import { useSignIn } from "@clerk/clerk-expo";
 import { Link, useRouter } from "expo-router";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
-import React from "react";
+import { Image } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { authStyles } from "../../assets/styles/auth.styles";
+import { COLORS } from "@/constants/colors";
 
-export default function Page() {
+export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   // Handle the submission of the sign-in form
-  const onSignInPress = async () => {
+  const handleSignIn = async () => {
     if (!isLoaded) return;
 
     // Start the sign-in process using the email and password provided
@@ -39,28 +53,91 @@ export default function Page() {
   };
 
   return (
-    <View>
-      <Text>Sign in</Text>
-      <TextInput
-        autoCapitalize="none"
-        value={emailAddress}
-        placeholder="Enter email"
-        onChangeText={(emailAddress) => setEmailAddress(emailAddress)}
-      />
-      <TextInput
-        value={password}
-        placeholder="Enter password"
-        secureTextEntry={true}
-        onChangeText={(password) => setPassword(password)}
-      />
-      <TouchableOpacity onPress={onSignInPress}>
-        <Text>Continue</Text>
-      </TouchableOpacity>
-      <View style={{ display: "flex", flexDirection: "row", gap: 3 }}>
-        <Link href="/sign-up">
-          <Text>Sign up</Text>
-        </Link>
-      </View>
+    <View style={authStyles.container}>
+      <KeyboardAvoidingView
+        style={authStyles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 68 : 74}
+      >
+        <ScrollView
+          contentContainerStyle={authStyles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Image
+            source={require("../../assets/images/i1.png")}
+            style={authStyles.image}
+            contentFit="contain"
+          />
+
+          <Text style={authStyles.title}>Welcome Back!</Text>
+
+          {/* FORM CONTAINER */}
+          <View style={authStyles.formContainer}>
+            {/* Email Input */}
+            <View style={authStyles.inputContainer}>
+              <TextInput
+                style={authStyles.textInput}
+                placeholder="Enter email..."
+                value={emailAddress}
+                onChangeText={setEmailAddress}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor={COLORS.textLight}
+              />
+            </View>
+
+            {/* Password Input */}
+            <View style={authStyles.inputContainer}>
+              <TextInput
+                style={authStyles.textInput}
+                placeholder="Enter password..."
+                value={password}
+                onChangeText={setPassword}
+                placeholderTextColor={COLORS.textLight}
+                autoCapitalize="none"
+                secureTextEntry={!showPassword}
+              />
+
+              <TouchableOpacity
+                style={authStyles.eyeButton}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  size={20}
+                  color={COLORS.textLight}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Submit Inputs */}
+            <TouchableOpacity
+              style={[
+                authStyles.authButton,
+                loading && authStyles.buttonDisabled,
+              ]}
+              onPress={handleSignIn}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <Text style={authStyles.buttonText}>
+                {loading ? "Sign In..." : "Sign In"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Sign Up Link */}
+            <TouchableOpacity
+              style={authStyles.linkContainer}
+              onPress={() => router.push("/(auth)/sign-up")}
+            >
+              <Text style={authStyles.linkText}>
+                Don&apos;t have an account?{" "}
+                <Text style={authStyles.link}>Sign Up</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
