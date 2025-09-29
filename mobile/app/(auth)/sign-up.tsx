@@ -1,20 +1,41 @@
 import * as React from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSignUp } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { authStyles } from "@/assets/styles/auth.styles";
+import { Image } from "expo-image";
+import { COLORS } from "@/constants/colors";
+import { Ionicons } from "@expo/vector-icons";
+import VerifyEmailScreen from "./verify-email";
 
 export default function SignUpScreen() {
-  const { isLoaded, signUp, setActive } = useSignUp();
+  const { isLoaded, signUp } = useSignUp();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
   const [pendingVerification, setPendingVerification] = React.useState(false);
-  const [code, setCode] = React.useState("");
 
   // Handle submission of sign-up form
-  const onSignUpPress = async () => {
+  const handleSignUp = async () => {
+    if (!emailAddress || !password)
+      return Alert.alert("Error", "Please fill in all fields");
+    if (password.length < 6)
+      return Alert.alert("Error", "Password must be at least 6 characters");
     if (!isLoaded) return;
+
+    setLoading(true);
 
     // Start sign-up process using email and password provided
     try {
@@ -30,81 +51,111 @@ export default function SignUpScreen() {
       // and capture OTP code
       setPendingVerification(true);
     } catch (err) {
+      Alert.alert("Error", "Failed to create account");
       // See https://clerk.com/docs/custom-flows/error-handling
       // for more info on error handling
       console.error(JSON.stringify(err, null, 2));
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle submission of verification form
-  const onVerifyPress = async () => {
-    if (!isLoaded) return;
-
-    try {
-      // Use the code the user provided to attempt verification
-      const signUpAttempt = await signUp.attemptEmailAddressVerification({
-        code,
-      });
-
-      // If verification was completed, set the session to active
-      // and redirect the user
-      if (signUpAttempt.status === "complete") {
-        await setActive({ session: signUpAttempt.createdSessionId });
-        router.replace("/");
-      } else {
-        // If the status is not complete, check why. User may need to
-        // complete further steps.
-        console.error(JSON.stringify(signUpAttempt, null, 2));
-      }
-    } catch (err) {
-      // See https://clerk.com/docs/custom-flows/error-handling
-      // for more info on error handling
-      console.error(JSON.stringify(err, null, 2));
-    }
-  };
-
+  // If 'pendingVerification' is true, show the verification screen
   if (pendingVerification) {
     return (
-      <>
-        <Text>Verify your email</Text>
-        <TextInput
-          value={code}
-          placeholder="Enter your verification code"
-          onChangeText={(code) => setCode(code)}
-        />
-        <TouchableOpacity onPress={onVerifyPress}>
-          <Text>Verify</Text>
-        </TouchableOpacity>
-      </>
+      <VerifyEmailScreen
+        emailAddress={emailAddress}
+        onBack={() => setPendingVerification(false)}
+      />
     );
   }
 
   return (
-    <View>
-      <>
-        <Text>Sign up</Text>
-        <TextInput
-          autoCapitalize="none"
-          value={emailAddress}
-          placeholder="Enter email"
-          onChangeText={(email) => setEmailAddress(email)}
-        />
-        <TextInput
-          value={password}
-          placeholder="Enter password"
-          secureTextEntry={true}
-          onChangeText={(password) => setPassword(password)}
-        />
-        <TouchableOpacity onPress={onSignUpPress}>
-          <Text>Continue</Text>
-        </TouchableOpacity>
-        <View style={{ display: "flex", flexDirection: "row", gap: 3 }}>
-          <Text>Already have an account?</Text>
-          <Link href="/sign-in">
-            <Text>Sign in</Text>
-          </Link>
-        </View>
-      </>
+    <View style={authStyles.container}>
+      <KeyboardAvoidingView
+        style={authStyles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 68 : 74}
+      >
+        <ScrollView
+          contentContainerStyle={authStyles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Image
+            source={require("../../assets/images/i2.png")}
+            style={authStyles.image}
+            contentFit="contain"
+          />
+
+          <Text style={authStyles.title}>Create Account</Text>
+
+          {/* FORM CONTAINER */}
+          <View style={authStyles.formContainer}>
+            {/* Email Input */}
+            <View style={authStyles.inputContainer}>
+              <TextInput
+                style={authStyles.textInput}
+                placeholder="Enter email..."
+                value={emailAddress}
+                onChangeText={setEmailAddress}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor={COLORS.textLight}
+              />
+            </View>
+
+            {/* Password Input */}
+            <View style={authStyles.inputContainer}>
+              <TextInput
+                style={authStyles.textInput}
+                placeholder="Enter password..."
+                value={password}
+                onChangeText={setPassword}
+                placeholderTextColor={COLORS.textLight}
+                autoCapitalize="none"
+                secureTextEntry={!showPassword}
+              />
+
+              <TouchableOpacity
+                style={authStyles.eyeButton}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  size={20}
+                  color={COLORS.textLight}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Submit Inputs */}
+            <TouchableOpacity
+              style={[
+                authStyles.authButton,
+                loading && authStyles.buttonDisabled,
+              ]}
+              onPress={handleSignUp}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <Text style={authStyles.buttonText}>
+                {loading ? "Creating account..." : "Create account"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Sign Up Link */}
+            <TouchableOpacity
+              style={authStyles.linkContainer}
+              onPress={() => router.back()}
+            >
+              <Text style={authStyles.linkText}>
+                Already have an account?{" "}
+                <Text style={authStyles.link}>Sign In</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
