@@ -33,16 +33,51 @@ const FavoritesRecipeScreen = (): React.JSX.Element => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
 
     const loadFavorites = async (): Promise<void> => {
       try {
         const response = await fetch(`${API_URL}/favorites/${user.id}`);
-        if (!response.ok) throw new Error("Failed to fetch favorites");
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch favorites: ${response.status} ${response.statusText}`
+          );
+        }
+
         const favorites = await response.json();
 
+        // Handle different response formats from backend
+        let favoritesArray = favorites;
+
+        // If the response is wrapped in an object (e.g., { favorites: [...] })
+        if (
+          favorites &&
+          typeof favorites === "object" &&
+          !Array.isArray(favorites)
+        ) {
+          // Check common property names
+          if (Array.isArray(favorites.favorites)) {
+            favoritesArray = favorites.favorites;
+          } else if (Array.isArray(favorites.data)) {
+            favoritesArray = favorites.data;
+          } else if (Array.isArray(favorites.results)) {
+            favoritesArray = favorites.results;
+          } else {
+            favoritesArray = [];
+          }
+        }
+
+        // Ensure we have an array
+        if (!Array.isArray(favoritesArray)) {
+          favoritesArray = [];
+        }
+
         // transform the data to match the RecipeCard component's expected format
-        const transformedFavorites: FavoriteRecipe[] = favorites.map(
+        const transformedFavorites: FavoriteRecipe[] = favoritesArray.map(
           (favorite: any) => ({
             ...favorite,
             id: favorite.recipeId,
@@ -51,8 +86,13 @@ const FavoritesRecipeScreen = (): React.JSX.Element => {
 
         setFavoriteRecipes(transformedFavorites);
       } catch (error) {
-        console.log("Error loading favorites", error);
-        Alert.alert("Error", "Failed to load favorites");
+        console.error("Error loading favorites:", error);
+        Alert.alert(
+          "Error",
+          `Failed to load favorites: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       } finally {
         setLoading(false);
       }

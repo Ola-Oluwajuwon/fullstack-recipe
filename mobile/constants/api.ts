@@ -1,2 +1,3 @@
-// change this to the deployed url :-)
-export const API_URL: string = "http://localhost:5001/api";
+// Production API URL for Render deployment
+export const API_URL: string =
+  "https://fullstack-recipe-backend.onrender.com/api";
